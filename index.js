@@ -2,6 +2,9 @@
 import connection from './database/conection.js'
 import express, { json, urlencoded } from 'express'
 import cors from 'cors'
+import UserRoutes from './routes/user.js'
+import PublicationsRoutes from './routes/publications.js'
+import FollowRoutes from './routes/follow.js'
 
 console.log('API running...')
 
@@ -21,6 +24,10 @@ app.use(json())
 app.use(urlencoded({ extended: true }))
 
 // Routes config
+app.use('/api/user', UserRoutes)
+app.use('/api/publications', PublicationsRoutes)
+app.use('/api/follow', FollowRoutes)
+
 app.get('/test-route', (req, res) => {
   return res.status(200).json(
     {
