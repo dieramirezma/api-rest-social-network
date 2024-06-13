@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "API REST with MERN stack and JWT authentication for a social network",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:watch": "node --watch index.js",

@@ -1,7 +1,7 @@
 // Imports
-const connection = require('./database/conection')
-const express = require('express')
-const cors = require('cors')
+import connection from './database/conection.js'
+import express, { json, urlencoded } from 'express'
+import cors from 'cors'
 
 console.log('API running...')
 
@@ -17,8 +17,8 @@ const port = 3900
 app.use(cors())
 
 // Parse JSON
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(json())
+app.use(urlencoded({ extended: true }))
 
 // Routes config
 app.get('/test-route', (req, res) => {
