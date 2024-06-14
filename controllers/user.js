@@ -1,5 +1,6 @@
 import User from '../models/user.js'
 import bcrypt from 'bcrypt'
+import { createToken } from '../services/jwt.js'
 
 // Test actions
 export const testUser = (req, res) => {
@@ -63,12 +64,65 @@ export const register = async (req, res) => {
   }
 }
 
-// Get data from petition
+// Authenticate users method
+export const login = async (req, res) => {
+  try {
+    const params = req.body
 
-// Validate data
+    // Check required fields
+    if (!params.email || !params.password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing required fields'
+      })
+    }
 
-// Check if user exists
+    // Find user by email
+    const user = await User.findOne({ email: params.email.toLowerCase() })
 
-// Encrypt password
+    // If the user does not exist, return an error
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      })
+    }
 
-// Return register user
+    // Check password
+    const validPassword = await bcrypt.compare(params.password, user.password)
+
+    // If the password is incorrect, return an error
+    if (!validPassword) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Incorrect password'
+      })
+    }
+
+    // Generate token
+    const token = createToken(user)
+
+    // Return response
+    return res.status(200).json({
+      status: 'success',
+      messagge: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        lastname: user.lastname,
+        email: user.email,
+        nick: user.nick,
+        role: user.role,
+        image: user.image,
+        created_at: user.created_at
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error in the login process'
+    })
+  }
+}
