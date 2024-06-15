@@ -4,7 +4,7 @@ import { secret } from '../services/jwt.js'
 
 // Ensure that the token is valid
 export const ensureAuth = (req, res, next) => {
-  // (Check if the authorization header is present
+  // Check if the authorization header is present
   if (!req.headers.authorization) {
     return res.status(403).send({
       status: 'error',

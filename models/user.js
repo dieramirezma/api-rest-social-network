@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const UserSchema = Schema({
   name: {
@@ -13,6 +14,7 @@ const UserSchema = Schema({
     type: String,
     required: true
   },
+  bio: String,
   email: {
     type: String,
     required: true
@@ -34,5 +36,8 @@ const UserSchema = Schema({
     default: Date.now
   }
 })
+
+// Add pagination plugin
+UserSchema.plugin(mongoosePaginate)
 
 export default model('User', UserSchema, 'users')

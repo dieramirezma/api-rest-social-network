@@ -1,5 +1,5 @@
 import User from '../models/user.js'
-import bcrypt from 'bcrypt'
+import bcrypt, { hash } from 'bcrypt'
 import { createToken } from '../services/jwt.js'
 
 // Test actions
@@ -105,12 +105,13 @@ export const login = async (req, res) => {
     // Return response
     return res.status(200).json({
       status: 'success',
-      messagge: 'Login successful',
+      message: 'Login successful',
       token,
       user: {
         id: user._id,
         name: user.name,
         lastname: user.lastname,
+        bio: user.bio,
         email: user.email,
         nick: user.nick,
         role: user.role,
@@ -123,6 +124,81 @@ export const login = async (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Error in the login process'
+    })
+  }
+}
+
+// Show user profile method
+export const profile = async (req, res) => {
+  try {
+    // Get user id from params of the URL
+    const userId = req.params.id
+
+    // Find user in the DB, excluding role and version
+    const user = await User.findById(userId).select('-password -role -__v')
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'User not found'
+      })
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Profile information obtained successfully',
+      user
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error to get the profile information'
+    })
+  }
+}
+
+// List user with pagination method
+export const listUsers = async (req, res) => {
+  try {
+    // Control pagination
+    const page = req.params.page ? parseInt(req.params.page, 10) : 1
+    const itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5
+
+    // Consult the DB with pagination
+    const options = {
+      page,
+      limit: itemsPerPage,
+      select: '--password --role --__v'
+    }
+
+    const users = await User.paginate({}, options)
+
+    if (!users || users.docs.length === 0) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'No users available'
+      })
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      users: users.docs,
+      totalDocs: users.totalDocs,
+      totalPages: users.totalPages,
+      page: users.page,
+      pagingCounter: users.pagingCounter,
+      hasPrevPage: users.hasPrevPage,
+      hasNextPage: users.hasNextPage,
+      prevPage: users.prevPage,
+      nextPage: users.nextPage
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to get the list of users'
     })
   }
 }
