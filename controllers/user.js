@@ -1,5 +1,5 @@
 import User from '../models/user.js'
-import bcrypt, { hash } from 'bcrypt'
+import bcrypt from 'bcrypt'
 import { createToken } from '../services/jwt.js'
 
 // Test actions
@@ -199,6 +199,84 @@ export const listUsers = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error to get the list of users'
+    })
+  }
+}
+
+// Update user profile method
+export const updateUser = async (req, res) => {
+  try {
+    // Get data from the request body
+    const userIdentity = req.user
+    const userToUpdate = req.body
+
+    if (!userToUpdate.email || !userToUpdate.nick) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'Missing required fields: email, nick'
+      })
+    }
+
+    // Delete properties that should not be updated
+    delete userToUpdate.iat
+    delete userToUpdate.exp
+    delete userToUpdate.role
+    delete userToUpdate.image
+
+    // Check if user exists
+    const users = await User.find({
+      $or: [
+        { email: userToUpdate.email.toLowerCase() },
+        { nick: userToUpdate.nick.toLowerCase() }
+      ]
+    }).exec()
+
+    const isDuplicateUser = users.some(user => user && user._id.toString() !== userIdentity.userId)
+
+    if (isDuplicateUser) {
+      return res.status(409).send({
+        status: 'error',
+        message: 'Only one user can have the same email or nick'
+      })
+    }
+
+    // Encrypt password
+    if (userToUpdate.password) {
+      try {
+        const salt = await bcrypt.genSalt(10)
+        const pwd = await bcrypt.hash(userToUpdate.password, salt)
+        userToUpdate.password = pwd
+      } catch (error) {
+        console.log(error)
+        return res.status(500).send({
+          status: 'error',
+          message: 'Error to encrypt the password'
+        })
+      }
+    } else {
+      delete userToUpdate.password
+    }
+
+    // Update user
+    const userUpdated = await User.findByIdAndUpdate(userIdentity.userId, userToUpdate, { new: true })
+
+    if (!userUpdated) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'Error to update the user profile'
+      })
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'User profile updated successfully',
+      user: userUpdated
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to update the user profile'
     })
   }
 }
