@@ -1,6 +1,7 @@
 import User from '../models/user.js'
 import bcrypt from 'bcrypt'
 import { createToken } from '../services/jwt.js'
+import fs from 'fs'
 
 // Test actions
 export const testUser = (req, res) => {
@@ -277,6 +278,74 @@ export const updateUser = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error to update the user profile'
+    })
+  }
+}
+
+// Upload user image method
+export const uploadFiles = async (req, res) => {
+  try {
+    // Get file from request and check if it exists
+    if (!req.file) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'No files were uploaded'
+      })
+    }
+
+    const image = req.file.originalname
+
+    // Get file extension
+    const extension = image.split('.').pop()
+    const validExtensions = ['png', 'jpg', 'jpeg', 'gif']
+
+    if (!validExtensions.includes(extension.toLowerCase())) {
+      const filePath = req.file.path
+      fs.unlinkSync(filePath)
+
+      return res.status(400).send({
+        status: 'error',
+        message: 'Invalid file extension. Only extensions: ' + validExtensions.join(', ')
+      })
+    }
+
+    // Validate file size
+    const fileSize = req.file.size
+    const maxFileSize = 2 * 1024 * 1024
+
+    if (fileSize > maxFileSize) {
+      const filePath = req.file.path
+      fs.unlinkSync(filePath)
+
+      return res.status(400).send({
+        status: 'error',
+        message: 'File size exceeded. Max file size: 2MB'
+      })
+    }
+
+    const userUpdated = await User.findByIdAndUpdate(
+      { _id: req.user.userId },
+      { image: req.file.filename },
+      { new: true }
+    )
+    if (!userUpdated) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'Error to update the user image'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'Files uploaded successfully',
+      user: req.user,
+      file: req.file
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to upload files'
     })
   }
 }
