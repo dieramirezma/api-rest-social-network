@@ -2,6 +2,7 @@ import User from '../models/user.js'
 import bcrypt from 'bcrypt'
 import { createToken } from '../services/jwt.js'
 import fs from 'fs'
+import path from 'path'
 
 // Test actions
 export const testUser = (req, res) => {
@@ -346,6 +347,33 @@ export const uploadFiles = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error to upload files'
+    })
+  }
+}
+
+// Show user image method
+export const avatar = async (req, res) => {
+  try {
+    // Get file from request
+    const file = req.params.file
+
+    // Get file path and check if it exists
+    const filePath = `./uploads/avatars/${file}`
+    fs.stat(filePath, (error, exists) => {
+      if (!exists || error) {
+        return res.status(404).send({
+          status: 'error',
+          message: 'File not found'
+        })
+      }
+
+      return res.sendFile(path.resolve(filePath))
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to get the user image'
     })
   }
 }
