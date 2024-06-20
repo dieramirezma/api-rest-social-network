@@ -1,5 +1,5 @@
 // Imports
-import connection from './database/conection.js'
+import connection from './database/connection.js'
 import express, { json, urlencoded } from 'express'
 import cors from 'cors'
 import UserRoutes from './routes/user.js'
@@ -8,7 +8,7 @@ import FollowRoutes from './routes/follow.js'
 
 console.log('API running...')
 
-// DB conection
+// DB connection
 console.log('Trying to connect to the database...')
 connection()
 
