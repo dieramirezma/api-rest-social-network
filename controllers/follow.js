@@ -1,5 +1,6 @@
 import Follow from '../models/follow.js'
 import User from '../models/user.js'
+import { followUserIds } from '../services/followService.js'
 
 // Test actions
 export const testFollow = (req, res) => {
@@ -149,11 +150,48 @@ export const unfollow = async (req, res) => {
 // List follows
 export const following = async (req, res) => {
   try {
-    return res.status(200).send({
+    // Get the auth user ID from the token
+    let userId = req.user && req.user.userId ? req.user.userId : undefined
+
+    // Check if the user ID is in the URL
+    if (req.params.id) userId = req.params.id
+
+    // Set the page number
+    const page = req.params.page ? parseInt(req.params.page, 10) : 1
+
+    // Set the number of follows per page
+    const itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5
+
+    // Config the options for the pagination
+    const options = {
+      page,
+      limit: itemsPerPage,
+      populate: {
+        path: 'followed_user',
+        select: '-password -role -__v'
+      },
+      lean: true
+    }
+
+    // Find the follows in the DB and populate the users
+    const follows = await Follow.paginate({ following_user: userId }, options)
+
+    // List of followers
+    const followUsers = await followUserIds(req)
+
+    return res.status(200).json({
       status: 'success',
-      message: 'List of follows'
+      message: 'List of follows',
+      follows: follows.docs,
+      total: follows.totalDocs,
+      pages: follows.totalPages,
+      page: follows.page,
+      limit: follows.limit,
+      usersFollowing: followUsers.following,
+      userFollowMe: followUsers.followers
     })
   } catch (error) {
+    console.log(error)
     return res.status(500).send({
       status: 'error',
       message: 'Error to list follows'
