@@ -112,3 +112,51 @@ export const saveFollow = async (req, res) => {
 }
 
 // Delete follow user
+export const unfollow = async (req, res) => {
+  try {
+    // Get the auth user ID from the token
+    const userId = req.user.userId
+
+    // Get the followed user ID from the request
+    const followedUserId = req.params.id
+
+    // Find the follow to delete
+    const followToDelete = await Follow.findOneAndDelete({
+      following_user: userId,
+      followed_user: followedUserId
+    })
+
+    // Check if the follow exists and was deleted
+    if (!followToDelete) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Follow not found or already deleted'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'User unfollowed successfully'
+    })
+  } catch (error) {
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to unfollow user'
+    })
+  }
+}
+
+// List follows
+export const following = async (req, res) => {
+  try {
+    return res.status(200).send({
+      status: 'success',
+      message: 'List of follows'
+    })
+  } catch (error) {
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to list follows'
+    })
+  }
+}
