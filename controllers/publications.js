@@ -50,3 +50,43 @@ export const savePublication = async (req, res) => {
     })
   }
 }
+
+// Show publication
+export const showPublication = async (req, res) => {
+  try {
+    // Get the id from the URL
+    const { id } = req.params
+
+    // Check if the id is valid
+    if (!id) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Publication not found'
+      })
+    }
+
+    // Find the publication in the DB
+    const publication = await Publication.findById(id)
+      .populate('user_id', 'name lastname -_id')
+      .select('-__v')
+
+    if (!publication) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Publication not found'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'Publication showed successfully',
+      publication
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error showing publication'
+    })
+  }
+}
