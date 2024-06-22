@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import { createToken } from '../services/jwt.js'
 import fs from 'fs'
 import path from 'path'
+import { followThisUser, followUserIds } from '../services/followService.js'
 
 // Test actions
 export const testUser = (req, res) => {
@@ -136,21 +137,33 @@ export const profile = async (req, res) => {
     // Get user id from params of the URL
     const userId = req.params.id
 
+    // Verify if the auth user ID exists
+    if (!req.user || !req.user.userId) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'User not identified'
+      })
+    }
+
     // Find user in the DB, excluding role and version
-    const user = await User.findById(userId).select('-password -role -__v')
+    const userProfile = await User.findById(userId).select('-password -role -__v')
 
     // Check if user exists
-    if (!user) {
+    if (!userProfile) {
       return res.status(404).send({
         status: 'error',
         message: 'User not found'
       })
     }
 
+    // Get user data
+    const followInfo = await followThisUser(req.user.userId, userId)
+
     return res.status(200).json({
       status: 'success',
       message: 'Profile information obtained successfully',
-      user
+      user: userProfile,
+      followInfo
     })
   } catch (error) {
     console.log(error)
@@ -183,6 +196,8 @@ export const listUsers = async (req, res) => {
         message: 'No users available'
       })
     }
+    // List of followers
+    const followUsers = await followUserIds(req)
 
     return res.status(200).json({
       status: 'success',
@@ -194,7 +209,9 @@ export const listUsers = async (req, res) => {
       hasPrevPage: users.hasPrevPage,
       hasNextPage: users.hasNextPage,
       prevPage: users.prevPage,
-      nextPage: users.nextPage
+      nextPage: users.nextPage,
+      usersFollowing: followUsers.following,
+      userFollowMe: followUsers.followers
     })
   } catch (error) {
     console.log(error)
