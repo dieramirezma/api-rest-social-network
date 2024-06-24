@@ -25,7 +25,7 @@ app.use(urlencoded({ extended: true }))
 
 // Routes config
 app.use('/api/user', UserRoutes)
-app.use('/api/publications', PublicationsRoutes)
+app.use('/api/publication', PublicationsRoutes)
 app.use('/api/follow', FollowRoutes)
 
 app.get('/test-route', (req, res) => {
