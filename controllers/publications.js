@@ -90,3 +90,46 @@ export const showPublication = async (req, res) => {
     })
   }
 }
+
+// Delete publication method
+export const deletePublication = async (req, res) => {
+  try {
+    // Get the id from the URL
+    const { id } = req.params
+
+    // Check if the id is valid
+    if (!id) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Publication not found'
+      })
+    }
+
+    // Find and delete the publication in the DB
+    const publicationDeleted = await Publication.findOneAndDelete({
+      _id: id,
+      user_id: req.user.userId
+    })
+      .populate('user_id', 'name lastname')
+
+    //  Check if the publication was deleted
+    if (!publicationDeleted) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'Publication not found or already deleted'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'Publication deleted successfully',
+      publication: publicationDeleted
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error deleting publication'
+    })
+  }
+}
