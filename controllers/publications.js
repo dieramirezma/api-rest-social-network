@@ -133,3 +133,53 @@ export const deletePublication = async (req, res) => {
     })
   }
 }
+
+// List publications method
+export const listPublicationsUser = async (req, res) => {
+  try {
+    // Get the user id from the URL
+    const { id } = req.params
+
+    const page = req.params.pag ? parseInt(req.params.pag, 10) : 1
+
+    const itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5
+
+    // Config the options for the pagination
+    const options = {
+      page,
+      limit: itemsPerPage,
+      sort: { created_at: 'desc' },
+      populate: {
+        path: 'user_id',
+        select: '-password -role -__v -email'
+      },
+      lean: true
+    }
+
+    // Find publications in the DB and populate the users
+    const publications = await Publication.paginate({ user_id: id }, options)
+
+    if (!publications.docs || publications.docs.length === 0) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Publications not found'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'Publication list showed successfully',
+      publications: publications.docs,
+      total: publications.totalDocs,
+      pages: publications.totalPages,
+      page: publications.page,
+      limit: publications.limit
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error showing publication list'
+    })
+  }
+}
