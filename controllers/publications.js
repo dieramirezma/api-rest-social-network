@@ -1,4 +1,6 @@
 import Publication from '../models/publications.js'
+import fs from 'fs'
+import path from 'path'
 
 // Test actions
 export const testPublications = (req, res) => {
@@ -180,6 +182,78 @@ export const listPublicationsUser = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error showing publication list'
+    })
+  }
+}
+
+// Upload files to the publication method
+export const uploadFiles = async (req, res) => {
+  try {
+    // Get the publication id from the URL
+    const { id } = req.params
+
+    // Get file from request and check if it exists
+    if (!req.file) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'No files were uploaded'
+      })
+    }
+
+    const file = req.file.originalname
+
+    // Get file extension
+    const extension = file.split('.').pop()
+    const validExtensions = ['png', 'jpg', 'jpeg', 'gif', '.mp4']
+
+    if (!validExtensions.includes(extension.toLowerCase())) {
+      const filePath = req.file.path
+      fs.unlinkSync(filePath)
+
+      return res.status(400).send({
+        status: 'error',
+        message: 'Invalid file extension. Only extensions: ' + validExtensions.join(', ')
+      })
+    }
+
+    // Validate file size
+    const fileSize = req.file.size
+    const maxFileSize = 1 * 1024 * 1024
+
+    if (fileSize > maxFileSize) {
+      const filePath = req.file.path
+      fs.unlinkSync(filePath)
+
+      return res.status(400).send({
+        status: 'error',
+        message: 'File size exceeded. Max file size: 1MB'
+      })
+    }
+
+    // Update the publication file
+    const publicationUpdated = await Publication.findOneAndUpdate(
+      { user_id: req.user.userId, _id: id },
+      { file: req.file.filename },
+      { new: true }
+    )
+    if (!publicationUpdated) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'Error to update the publication file'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'File uploaded successfully',
+      publication: publicationUpdated,
+      file: req.file
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to upload files'
     })
   }
 }
