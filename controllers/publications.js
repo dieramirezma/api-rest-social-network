@@ -1,6 +1,7 @@
 import Publication from '../models/publications.js'
 import fs from 'fs'
 import path from 'path'
+import { followUserIds } from '../services/followService.js'
 
 // Test actions
 export const testPublications = (req, res) => {
@@ -192,6 +193,15 @@ export const uploadFiles = async (req, res) => {
     // Get the publication id from the URL
     const { id } = req.params
 
+    if (id.length !== 24) {
+      const filePath = req.file.path
+      fs.unlinkSync(filePath)
+      return res.status(400).send({
+        status: 'error',
+        message: 'Invalid publication id'
+      })
+    }
+
     // Get file from request and check if it exists
     if (!req.file) {
       return res.status(404).send({
@@ -281,6 +291,75 @@ export const showMedia = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error to show the publication media'
+    })
+  }
+}
+
+// List publications (Feed) method
+export const feed = async (req, res) => {
+  try {
+    const page = req.params.page ? parseInt(req.params.page, 10) : 1
+
+    const itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5
+
+    // Check if authenticated user exists
+    if (!req.user || !req.user.userId) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'User not authenticated'
+      })
+    }
+
+    // Get the users that the authenticated user follows
+    const myFollows = await followUserIds(req)
+    console.log(myFollows)
+    // Check if the list of follows is empty
+    if (!myFollows.following || !myFollows.following.length === 0) {
+      return res.status(400).send({
+        status: 'error',
+        message: 'You are not following any user. No publications to show'
+      })
+    }
+
+    // Config the options for the pagination
+    const options = {
+      page,
+      limit: itemsPerPage,
+      sort: { created_at: 'desc' },
+      populate: {
+        path: 'user_id',
+        select: '-password -role -__v -email'
+      },
+      lean: true
+    }
+
+    // Find publications in the DB and populate the users
+    const publications = await Publication.paginate(
+      { user_id: { $in: myFollows.following } },
+      options
+    )
+
+    if (!publications.docs || publications.docs.length === 0) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Publications not found'
+      })
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'Feed publications showed successfully',
+      publications: publications.docs,
+      total: publications.totalDocs,
+      pages: publications.totalPages,
+      page: publications.page,
+      limit: publications.limit
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error showing feed publications'
     })
   }
 }

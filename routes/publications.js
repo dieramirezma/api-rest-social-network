@@ -1,6 +1,6 @@
 // Imports
 import { Router } from 'express'
-import { deletePublication, listPublicationsUser, savePublication, showMedia, showPublication, testPublications, uploadFiles } from '../controllers/publications.js'
+import { deletePublication, feed, listPublicationsUser, savePublication, showMedia, showPublication, testPublications, uploadFiles } from '../controllers/publications.js'
 import { ensureAuth } from '../middlewares/auth.js'
 import multer from 'multer'
 
@@ -26,6 +26,7 @@ router.delete('/delete-publication/:id', ensureAuth, deletePublication)
 router.get('/publications-user/:id/:pag?', ensureAuth, listPublicationsUser)
 router.post('/upload-media/:id', [ensureAuth, uploads.single('file0')], uploadFiles)
 router.get('/show-media/:file', showMedia)
+router.get('/feed/:page?', ensureAuth, feed)
 
 // Export
 export default router
