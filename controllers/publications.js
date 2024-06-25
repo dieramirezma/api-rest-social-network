@@ -193,15 +193,6 @@ export const uploadFiles = async (req, res) => {
     // Get the publication id from the URL
     const { id } = req.params
 
-    if (id.length !== 24) {
-      const filePath = req.file.path
-      fs.unlinkSync(filePath)
-      return res.status(400).send({
-        status: 'error',
-        message: 'Invalid publication id'
-      })
-    }
-
     // Get file from request and check if it exists
     if (!req.file) {
       return res.status(404).send({
@@ -237,6 +228,17 @@ export const uploadFiles = async (req, res) => {
       return res.status(400).send({
         status: 'error',
         message: 'File size exceeded. Max file size: 1MB'
+      })
+    }
+
+    // Validate if file exists before to continue
+    const actualFilePath = path.resolve('./uploads/publications/', req.file.filename)
+    try {
+      fs.statSync(actualFilePath)
+    } catch (error) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'File not exists or there was an error in this verification'
       })
     }
 
