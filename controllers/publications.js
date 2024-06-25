@@ -204,7 +204,7 @@ export const uploadFiles = async (req, res) => {
 
     // Get file extension
     const extension = file.split('.').pop()
-    const validExtensions = ['png', 'jpg', 'jpeg', 'gif', '.mp4']
+    const validExtensions = ['png', 'jpg', 'jpeg', 'gif', 'mp4']
 
     if (!validExtensions.includes(extension.toLowerCase())) {
       const filePath = req.file.path
@@ -254,6 +254,33 @@ export const uploadFiles = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error to upload files'
+    })
+  }
+}
+
+// Show media publication method
+export const showMedia = async (req, res) => {
+  try {
+    // Get file from request
+    const file = req.params.file
+
+    // Get file path and check if it exists
+    const filePath = `./uploads/publications/${file}`
+    fs.stat(filePath, (error, exists) => {
+      if (!exists || error) {
+        return res.status(404).send({
+          status: 'error',
+          message: 'File not found'
+        })
+      }
+
+      return res.sendFile(path.resolve(filePath))
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to show the publication media'
     })
   }
 }
