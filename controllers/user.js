@@ -4,6 +4,8 @@ import { createToken } from '../services/jwt.js'
 import fs from 'fs'
 import path from 'path'
 import { followThisUser, followUserIds } from '../services/followService.js'
+import Follow from '../models/follow.js'
+import Publication from '../models/publications.js'
 
 // Test actions
 export const testUser = (req, res) => {
@@ -353,7 +355,7 @@ export const uploadFiles = async (req, res) => {
       })
     }
 
-    return res.status(200).send({
+    return res.status(200).json({
       status: 'success',
       message: 'Files uploaded successfully',
       user: req.user,
@@ -391,6 +393,50 @@ export const avatar = async (req, res) => {
     return res.status(500).send({
       status: 'error',
       message: 'Error to get the user image'
+    })
+  }
+}
+
+// Show followers count method
+export const countFollowers = async (req, res) => {
+  try {
+    // Get user id from token
+    const userId = req.params.id ? req.params.id : req.user.userId
+
+    // Find user in the DB and get name and last name
+    const user = await User.findById(userId, { name: 1, lastname: 1 })
+
+    if (!user) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'User not found'
+      })
+    }
+
+    // Count number of following
+    const followingCount = await Follow.countDocuments({ following_user: userId })
+
+    // Count number of followers
+    const followedCount = await Follow.countDocuments({ followed_user: userId })
+
+    // Count number of publications
+    const publicationCount = await Publication.countDocuments({ user_id: userId })
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Followers count obtained successfully',
+      userId,
+      name: user.name,
+      lastname: user.lastname,
+      following: followingCount,
+      followed: followedCount,
+      publications: publicationCount
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error to get the followers count'
     })
   }
 }
