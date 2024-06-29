@@ -62,7 +62,8 @@ export const register = async (req, res) => {
         id: userToSave.id,
         name: userToSave.name,
         lastname: userToSave.lastname,
-        nick: userToSave.nick
+        nick: userToSave.nick,
+        email: userToSave.email
       }
     })
   } catch (error) {
@@ -192,7 +193,7 @@ export const listUsers = async (req, res) => {
     const options = {
       page,
       limit: itemsPerPage,
-      select: '--password --role --__v'
+      select: '--password --role --__v -email'
     }
 
     const users = await User.paginate({}, options)
