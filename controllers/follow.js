@@ -174,7 +174,7 @@ export const following = async (req, res) => {
     }
 
     // Find the follows in the DB and populate the users
-    const follows = await Follow.paginate({ following_user: userId }, options)
+    const follows = await Follow.paginate({ following_user: userId }, options)  
 
     // List of followers
     const followUsers = await followUserIds(req)
