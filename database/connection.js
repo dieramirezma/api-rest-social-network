@@ -1,9 +1,14 @@
 import { connect } from 'mongoose'
+import dotenv from 'dotenv'
+
+// Load environment variables
+dotenv.config()
 
 const connection = async () => {
   try {
-    await connect('mongodb://localhost:27017/db_social_network')
-    console.log('Connected to the database')
+    const { MONGO_URI } = process.env
+    await connect(MONGO_URI)
+    console.log('Connected to the database in Atlas')
   } catch (error) {
     console.log(error)
     throw new Error('Error connecting to the database')
